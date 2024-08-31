@@ -1,0 +1,9 @@
+import NextAuth from "next-auth"
+import { NextResponse } from "next/server"
+
+export function GET(){
+    return NextResponse.json({
+       message:"Hi there"
+    })
+}
+
