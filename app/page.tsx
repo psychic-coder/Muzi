@@ -1,9 +1,10 @@
 import React from 'react'
+import Appbar from './components/Appbar'
 
 const page = () => {
   return (
     <div>
-      Hi there
+     <Appbar/>
     </div>
   )
 }
