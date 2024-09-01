@@ -1,4 +1,5 @@
 import { prismaClient } from "@/app/lib/db";
+import { YT_REGEX } from "@/app/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 import {z} from "zod";
 
@@ -7,15 +8,35 @@ const CreateStreamSchema=z.object({
     url:z.string()
 
 })
+const YT=new RegExp(YT_REGEX);
+
 
 export async function POST (req:NextRequest){
     //the below code is used for data correction
     
     try {
         const data= CreateStreamSchema.parse(await req.json());
-        prismaClient.stream.create({
-            userId:data.creatorId
+        const isYt=YT.test(data.url);
+        
+        if(!isYt){
+            return NextResponse.json({
+                message:"Wrong URL format "
+               },{
+                status:411
+               }) 
+        }
 
+
+        //it is the extracted id from the url we have 
+        const extractedId=data.url.split("?v=")[1];
+
+          await prismaClient.stream.create({
+           data:{
+            userId:data.creatorId,
+            url:data.url,
+            extractedId,
+            type:"Youtube"
+           }
         })
 
     } catch (error) {
