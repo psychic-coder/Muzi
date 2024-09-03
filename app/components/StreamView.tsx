@@ -13,6 +13,7 @@ import 'react-lite-youtube-embed/dist/LiteYouTubeEmbed.css'
 import { YT_REGEX } from '../lib/utils'
 //@ts-ignore
 import YouTubePlayer from 'youtube-player';
+import axios from 'axios'
 
 interface Video {
     "id": string,
@@ -57,6 +58,7 @@ export default function StreamView({
         }
         return json.activeStream.stream
     });
+    
   }
 
   useEffect(() => {
