@@ -118,7 +118,7 @@ export default function StreamView({
         : video
     ).sort((a, b) => (b.upvotes) - (a.upvotes)))
 
-    fetch(`/api/streams/${isUpvote ? "upvote" : "downvote"}`, {
+    fetch(`/api/streams/${isUpvote ? "upvote":"downvote"}`, {
         method: "POST",
         body: JSON.stringify({
             streamId: id
