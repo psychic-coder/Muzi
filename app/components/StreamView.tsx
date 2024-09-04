@@ -13,7 +13,6 @@ import 'react-lite-youtube-embed/dist/LiteYouTubeEmbed.css'
 import { YT_REGEX } from '../lib/utils'
 //@ts-ignore
 import YouTubePlayer from 'youtube-player';
-import axios from 'axios'
 
 interface Video {
     "id": string,
@@ -58,7 +57,6 @@ export default function StreamView({
         }
         return json.activeStream.stream
     });
-    
   }
 
   useEffect(() => {
@@ -118,7 +116,7 @@ export default function StreamView({
         : video
     ).sort((a, b) => (b.upvotes) - (a.upvotes)))
 
-    fetch(`/api/streams/${isUpvote ? "upvote":"downvote"}`, {
+    fetch(`/api/streams/${isUpvote ? "upvote" : "downvote"}`, {
         method: "POST",
         body: JSON.stringify({
             streamId: id

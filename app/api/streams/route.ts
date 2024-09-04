@@ -1,23 +1,19 @@
 import { prismaClient } from "@/app/lib/db";
-import { YT_REGEX } from "@/app/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
-import {z} from "zod";
+import { z } from "zod";
 //@ts-ignore
 import youtubesearchapi from "youtube-search-api";
+import { YT_REGEX } from "@/app/lib/utils";
+import { getServerSession } from "next-auth";
 
-const CreateStreamSchema=z.object({
-    creatorId:z.string(),
-    url:z.string()
+const CreateStreamSchema = z.object({
+    creatorId: z.string(),
+    url: z.string()
+});
 
-})
 const MAX_QUEUE_LEN = 20;
 
-const YT=new RegExp(YT_REGEX);
-
-
-export async function POST (req:NextRequest){
-    //the below code is used for data correction
-    
+export async function POST(req: NextRequest) {
     try {
         const data = CreateStreamSchema.parse(await req.json());
         const isYt = data.url.match(YT_REGEX)
@@ -30,6 +26,7 @@ export async function POST (req:NextRequest){
         }
 
         const extractedId = data.url.split("?v=")[1];
+
         const res = await youtubesearchapi.GetVideoDetails(extractedId);
 
         const thumbnails = res.thumbnail.thumbnails;
@@ -66,26 +63,76 @@ export async function POST (req:NextRequest){
             hasUpvoted: false,
             upvotes: 0
         })
-    } catch (error) {
-       return NextResponse.json({
-        message:"Error while adding a stream "
-       },{
-        status:411
-       })
-        
+    } catch(e) {
+        console.log(e);
+        return NextResponse.json({
+            message: "Error while adding a stream"
+        }, {
+            status: 411
+        })
     }
-    
+
 }
 
-export async function GET(req:NextRequest){
-    const creatorId=req.nextUrl.searchParams.get("creatorId");
-    const streams=await prismaClient.stream.findMany({
-        where:{
-            userId:creatorId ?? ""
+export async function GET(req: NextRequest) {
+    const creatorId = req.nextUrl.searchParams.get("creatorId");
+    const session = await getServerSession();
+     // TODO: You can get rid of the db call here 
+     const user = await prismaClient.user.findFirst({
+        where: {
+            email: session?.user?.email ?? ""
         }
-    })
+    });
+
+    if (!user) {
+        return NextResponse.json({
+            message: "Unauthenticated"
+        }, {
+            status: 403
+        })
+    }
+
+    if (!creatorId) {
+        return NextResponse.json({
+            message: "Error"
+        }, {
+            status: 411
+        })
+    }
+
+    const [streams, activeStream] = await Promise.all([await prismaClient.stream.findMany({
+        where: {
+            userId: creatorId,
+            played: false
+        },
+        include: {
+            _count: {
+                select: {
+                    upvotes: true
+                }
+            },
+            upvotes: {
+                where: {
+                    userId: user.id
+                }
+            }
+        }
+    }), prismaClient.currentStream.findFirst({
+        where: {
+            userId: creatorId
+        },
+        include: {
+            stream: true
+        }
+    })])
 
     return NextResponse.json({
-        streams
+        streams: streams.map(({_count, ...rest}) => ({
+            ...rest,
+            upvotes: _count.upvotes,
+            haveUpvoted: rest.upvotes.length ? true : false
+        })),
+        activeStream
     })
 }
+ 
