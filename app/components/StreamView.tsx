@@ -44,7 +44,7 @@ export default function StreamView({
     creatorId,
     playVideo = false
 }: {
-    creatorId: string
+    creatorId: any ,
     playVideo: boolean
 }) {
     const [inputLink, setInputLink] = useState('')
